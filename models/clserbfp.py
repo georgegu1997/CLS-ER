@@ -113,7 +113,7 @@ class CLSERBFP(ContinualModel):
                 plastic_model_logits,
             )
 
-            working_feats, working_logits = self.plastic_model.extract_features(buf_inputs)
+            working_feats, working_logits = self.net.extract_features(buf_inputs)
 
             l_cons = torch.mean(self.consistency_loss(working_logits, ema_logits.detach()))
             l_reg = self.args.reg_weight * l_cons
