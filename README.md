@@ -31,7 +31,14 @@ We extended the [Mammoth](https://github.com/aimagelab/mammoth) framework with o
 
 Example:
 
-    python main.py --dataset gcil-cifar100 --weight_dist unif --model clser --buffer_size 500 --load_best_args
+    python main.py --dataset gcil-cifar100 --weight_dist unif --model clser --buffer_size 500 --load_best_args --tensorboard
+    python main.py --dataset gcil-cifar100 --weight_dist unif --model derpp --buffer_size 500 --load_best_args --tensorboard
+
+    python main.py --dataset gcil-cifar100 --weight_dist unif --model clser --buffer_size 200 --load_best_args --tensorboard
+    python main.py --dataset gcil-cifar100 --weight_dist unif --model derpp --buffer_size 200 --load_best_args --tensorboard
+
+    python main.py --dataset gcil-cifar100 --weight_dist unif --model clser --buffer_size 1000 --load_best_args --tensorboard
+    python main.py --dataset gcil-cifar100 --weight_dist unif --model derpp --buffer_size 1000 --load_best_args --tensorboard
     
     python main.py --dataset gcil-cifar100 --weight_dist longtail --model clser --buffer_size 500 --load_best_args
 

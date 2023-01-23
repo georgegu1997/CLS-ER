@@ -37,6 +37,8 @@ def main():
         if hasattr(mod, 'Buffer'):
             parser.add_argument('--buffer_size', type=int, required=True,
                                 help='The size of the memory buffer.')
+        if args.dataset == 'gcil-cifar100':
+            add_gcil_args(parser)
         args = parser.parse_args()
         if args.model == 'joint':
             if args.dataset == 'gcil-cifar100':
