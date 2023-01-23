@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 import os
 import importlib
+import sys
 from datasets import NAMES as DATASET_NAMES
 from models import get_all_models
 from argparse import ArgumentParser
@@ -39,7 +40,10 @@ def main():
                                 help='The size of the memory buffer.')
         if args.dataset == 'gcil-cifar100':
             add_gcil_args(parser)
-        args = parser.parse_args()
+
+        # Up to this point, the parsed arguments are only basic ones and used for get the best args
+        args = parser.parse_known_args()[0]
+
         if args.model == 'joint':
             if args.dataset == 'gcil-cifar100':
                 best = best_args[args.dataset]['sgd'][args.weight_dist]
@@ -54,8 +58,27 @@ def main():
             best = best[args.buffer_size]
         else:
             best = best[-1]
-        for key, value in best.items():
-            setattr(args, key, value)
+            
+        # for key, value in best.items():
+        #     setattr(args, key, value)
+
+        # Get the parser from the specific model and dataset
+        get_parser = getattr(mod, 'get_parser')
+        parser = get_parser()
+        if args.dataset == 'gcil-cifar100':
+            add_gcil_args(parser)
+
+        # Modified the input arguments according to best_args
+        to_parse = sys.argv[1:]
+
+        to_parse = to_parse + ['--' + k + '=' + str(v) 
+                               for k, v in best.items() 
+                               if '--' + k not in to_parse]
+                               
+        to_parse.remove('--load_best_args')
+        
+        # Parse the arguments
+        args = parser.parse_args(to_parse)
 
     else:
         get_parser = getattr(mod, 'get_parser')

@@ -42,6 +42,12 @@ Example:
     
     python main.py --dataset gcil-cifar100 --weight_dist longtail --model clser --buffer_size 500 --load_best_args
 
+CLS-ER w/ BFP
+```bash
+    # CLS-ER Baselines (for sanity check)
+    python main.py --dataset gcil-cifar100 --weight_dist unif --model clserbfp --buffer_size 500 --load_best_args --tensorboard --alpha_bfp 0.0
+```
+
 ## Requirements
 
 - torch==1.7.0

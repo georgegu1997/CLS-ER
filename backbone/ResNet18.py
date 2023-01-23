@@ -90,6 +90,7 @@ class ResNet(nn.Module):
 
         self._features = nn.Sequential(self.conv1,
                                        self.bn1,
+                                       nn.ReLU(),
                                        self.layer1,
                                        self.layer2,
                                        self.layer3,
@@ -97,6 +98,9 @@ class ResNet(nn.Module):
                                        )
 
         self.classifier = self.linear
+
+        # number of channels for each layer, used for bfp
+        self.net_channels = [nf * 1, nf * 2, nf * 4, nf * 8]
 
     def _make_layer(self, block: BasicBlock, planes: int,
                     num_blocks: int, stride: int) -> nn.Module:

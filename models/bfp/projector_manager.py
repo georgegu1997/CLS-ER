@@ -18,8 +18,8 @@ from utils.buffer import Buffer
 from models.utils.continual_model import ContinualModel
 from backbone.MNISTMLP import MNISTMLP
 from utils.args import *
-from utils.lowrank_reg import LowRankReg
-from utils.routines import forward_loader_all_layers
+# from utils.lowrank_reg import LowRankReg
+# from utils.routines import forward_loader_all_layers
 
 from .utils import *
 from .linear_decomposed import LinearDecomposed

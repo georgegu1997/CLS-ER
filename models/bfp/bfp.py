@@ -8,22 +8,14 @@ import math
 import torch
 import wandb
 
-import numpy as np
-import matplotlib.pyplot as plt
-import torch.nn as nn
-from torch.optim import SGD, Adam
 from torch.nn import functional as F
 
 from utils.buffer import Buffer
 from models.utils.continual_model import ContinualModel
-from backbone.MNISTMLP import MNISTMLP
 from utils.args import *
-from utils.lowrank_reg import LowRankReg
-from utils.routines import forward_loader_all_layers
 
 from .args import set_best_args
 from .utils import *
-from .linear_decomposed import LinearDecomposed
 from .projector_manager import ProjectorManager
 
 class Bfp(ContinualModel):
