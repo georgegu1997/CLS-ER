@@ -1,3 +1,4 @@
+import wandb
 import torch
 from utils.buffer import Buffer
 from utils.args import *
@@ -92,6 +93,8 @@ class CLSERBFP(ContinualModel):
         self.opt.zero_grad()
         loss = 0
 
+        log_dict = {}
+
         if not self.buffer.is_empty():
 
             buf_inputs, buf_labels = self.buffer.get_data(
@@ -120,9 +123,8 @@ class CLSERBFP(ContinualModel):
             loss += l_reg
 
             # Log values
-            if hasattr(self, 'writer'):
-                self.writer.add_scalar(f'Task {self.current_task}/l_cons', l_cons.item(), self.iteration)
-                self.writer.add_scalar(f'Task {self.current_task}/l_reg', l_reg.item(), self.iteration)
+            log_dict['train/l_cons'] = l_cons.item()
+            log_dict['train/l_reg'] = l_reg.item()
 
             # Backward feature projection
             if self.projector_manager.bfp_flag:
@@ -148,8 +150,7 @@ class CLSERBFP(ContinualModel):
                         working_feats, ema_feats, mask_new, mask_old)
                 loss += bfp_loss_all
 
-                if hasattr(self, 'writer'):
-                    self.writer.add_scalar(f'Task {self.current_task}/l_bfp', l_cons.item(), self.iteration)
+                log_dict['train/l_bfp'] = bfp_loss_all.item()
 
             inputs = torch.cat((inputs, buf_inputs))
             labels = torch.cat((labels, buf_labels))
@@ -159,10 +160,8 @@ class CLSERBFP(ContinualModel):
         ce_loss = self.loss(outputs, labels)
         loss += ce_loss
 
-        # Log values
-        if hasattr(self, 'writer'):
-            self.writer.add_scalar(f'Task {self.current_task}/ce_loss', ce_loss.item(), self.iteration)
-            self.writer.add_scalar(f'Task {self.current_task}/loss', loss.item(), self.iteration)
+        log_dict['train/ce_loss'] = ce_loss.item()
+        log_dict['train/loss'] = loss.item()
 
         self.opt.zero_grad()
         self.projector_manager.before_backward()
@@ -183,6 +182,13 @@ class CLSERBFP(ContinualModel):
 
         if torch.rand(1) < self.stable_model_update_freq:
             self.update_stable_model_variables()
+
+        # Log loss values
+        if self.args.wandb:
+            wandb.log(log_dict)
+        elif hasattr(self, 'writer'):
+            for k, v in log_dict.items():
+                self.writer.add_scalar(k, v, self.iteration)
 
         return loss.item()
 

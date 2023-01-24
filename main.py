@@ -2,6 +2,7 @@
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
+import datetime
 import os
 import importlib
 import sys
@@ -17,6 +18,7 @@ from utils.training import train
 from utils.best_args import best_args
 from utils.conf import set_random_seed
 
+time_suffix = datetime.datetime.now().strftime('%y%m%d%H%M%S')
 
 def main():
     parser = ArgumentParser(description='mammoth', allow_abbrev=False)
@@ -94,6 +96,20 @@ def main():
 
     if args.model == 'mer':
         setattr(args, 'batch_size', 1)
+
+    # Setting the exp_name, used for wandb logging
+    exp_name = f'{args.model}-{args.dataset}'
+    if 'buffer_size' in vars(args).keys():
+        exp_name += f'-buf_{args.buffer_size}'
+    if args.exp_suffix is not None:
+        exp_name += f'-{args.exp_suffix}'
+
+    if args.time_suffix is not None:
+        exp_name += "-" + args.time_suffix
+    else:
+        exp_name += "-" + time_suffix
+        
+    args.exp_name = exp_name
 
     dataset = get_dataset(args)
     backbone = dataset.get_backbone()

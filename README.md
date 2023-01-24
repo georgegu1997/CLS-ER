@@ -46,6 +46,8 @@ CLS-ER w/ BFP
 ```bash
     # CLS-ER Baselines (for sanity check)
     python main.py --dataset gcil-cifar100 --weight_dist unif --model clserbfp --buffer_size 500 --load_best_args --tensorboard --alpha_bfp 0.0
+
+    python main.py --dataset gcil-cifar100 --weight_dist unif --model clserbfp --buffer_size 500 --load_best_args --tensorboard --alpha_bfp 1 --proj_type 1 --final_feat --pool_dim hw --experiment_id bfp1_l1
 ```
 
 ## Requirements

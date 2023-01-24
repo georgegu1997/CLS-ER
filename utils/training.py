@@ -6,6 +6,7 @@
 import torch
 from utils.status import progress_bar, create_stash
 from utils.tb_logger import *
+from utils.wandb_logger import *
 from utils.loggers import *
 from utils.loggers import CsvLogger
 from argparse import Namespace
@@ -126,22 +127,23 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         if hasattr(model, ema_model):
             ema_results[ema_model], ema_results_mask_classes[ema_model] = [], []
 
-    if args.csv_log:
-        csv_logger = CsvLogger(dataset.SETTING, dataset.NAME, model.NAME, args.output_dir, args.experiment_id)
-        task_perf_path = os.path.join(args.output_dir, "results", dataset.SETTING, dataset.NAME, model.NAME, args.experiment_id, 'task_performance.txt')
-
-        for ema_model in lst_ema_models:
-            if hasattr(model, ema_model):
-                print('=' * 50)
-                print(f'Creating Logger for {ema_model}')
-                print('=' * 50)
-                ema_loggers[ema_model] = CsvLogger(dataset.SETTING, dataset.NAME, model.NAME, args.output_dir, args.experiment_id + f'_{ema_model}')
-                ema_task_perf_paths[ema_model] = os.path.join(args.output_dir, "results", dataset.SETTING, dataset.NAME, model.NAME, args.experiment_id + f'_{ema_model}', 'task_performance.txt')
-
-    if args.tensorboard:
-        tb_logger = TensorboardLogger(args, dataset.SETTING, model_stash)
-        model_stash['tensorboard_name'] = tb_logger.get_name()
-        model.writer = tb_logger.loggers[dataset.SETTING]
+    # By default, use the wandb logger
+    if args.wandb:
+        wandb_id = wandb.util.generate_id()
+        wandb.init(
+            project=args.project, 
+            name=args.exp_name, 
+            id=wandb_id,
+            config=args,
+            dir=args.ckpt_folder,
+            reinit=True,
+            settings=wandb.Settings(start_method="fork")
+        )
+        logger = WandbLogger(args, dataset.SETTING, args.project)
+    elif args.tensorboard:
+        logger = TensorboardLogger(args, dataset.SETTING, model_stash)
+        model_stash['tensorboard_name'] = logger.get_name()
+        model.writer = logger.loggers[dataset.SETTING]
 
     if dataset.NAME != 'gcil-cifar100':
         dataset_copy = get_dataset(args)
@@ -197,7 +199,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 progress_bar(i, len(train_loader), epoch, t, loss)
 
                 if args.tensorboard:
-                    tb_logger.log_loss(loss, args, epoch, t, i)
+                    logger.log_loss(loss, args, epoch, t, i)
 
                 model_stash['batch_idx'] = i + 1
             model_stash['epoch_idx'] = epoch + 1
@@ -222,10 +224,8 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         print_mean_accuracy(mean_acc, t + 1, dataset.SETTING)
 
         model_stash['mean_accs'].append(mean_acc)
-        if args.csv_log:
-            csv_logger.log(mean_acc)
         if args.tensorboard:
-            tb_logger.log_accuracy(np.array(accs), mean_acc, args, t)
+            logger.log_accuracy(np.array(accs), mean_acc, args, t)
 
         # Evaluate on EMA model
         for ema_model in lst_ema_models:
@@ -240,34 +240,11 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 ema_mean_acc = np.mean(ema_accs, axis=1)
                 print_mean_accuracy(ema_mean_acc, t + 1, dataset.SETTING)
 
-                if args.csv_log:
-                    ema_loggers[ema_model].log(ema_mean_acc)
-
                 if args.tensorboard:
-                    tb_logger.log_accuracy(np.array(ema_accs), ema_mean_acc, args, t, identifier=f'{ema_model}_')
-
-    if args.csv_log:
-        csv_logger.add_bwt(results, results_mask_classes)
-        csv_logger.add_forgetting(results, results_mask_classes)
-
-        for ema_model in lst_ema_models:
-            if ema_model in ema_loggers:
-                ema_loggers[ema_model].add_bwt(ema_results[ema_model], ema_results_mask_classes[ema_model])
-                ema_loggers[ema_model].add_forgetting(ema_results[ema_model], ema_results_mask_classes[ema_model])
-
-        if model.NAME != 'icarl' and model.NAME != 'pnn' and dataset.NAME != 'gcil-cifar100':
-            csv_logger.add_fwt(results, random_results_class,
-                               results_mask_classes, random_results_task)
+                    logger.log_accuracy(np.array(ema_accs), ema_mean_acc, args, t, identifier=f'{ema_model}_')
 
     if args.tensorboard:
-        tb_logger.close()
-    if args.csv_log:
-        csv_logger.write(vars(args))
-        save_task_perf(task_perf_path, results, dataset.N_TASKS)
-        for ema_model in lst_ema_models:
-            if ema_model in ema_loggers:
-                ema_loggers[ema_model].write(vars(args))
-                save_task_perf(ema_task_perf_paths[ema_model], ema_results[ema_model], dataset.N_TASKS)
+        logger.close()
 
     # Save Models
     lst_models = ['plastic_model', 'stable_model', 'net']

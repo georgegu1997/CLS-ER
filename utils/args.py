@@ -3,6 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import argparse
 from argparse import ArgumentParser
 from datasets import NAMES as DATASET_NAMES
 from models import get_all_models
@@ -60,10 +61,25 @@ def add_management_args(parser: ArgumentParser) -> None:
     parser.add_argument('--notes', type=str, default=None,
                         help='Notes for this run.')
 
-    parser.add_argument('--csv_log', action='store_true',
-                        help='Enable csv logging')
+    parser.add_argument("--base_path", type=str, default='./data/', 
+                        help="directory where logging and data will be stored. ")
+    parser.add_argument("--ckpt_folder", type=str, default='./checkpoint/',
+                        help="directory where checkpoints will be stored. ")
+
+    # parser.add_argument('--csv_log', action='store_true',
+    #                     help='Enable csv logging')
     parser.add_argument('--tensorboard', action='store_true',
                         help='Enable tensorboard logging')
+
+    parser.add_argument('--wandb', type=str2bool, default=True,
+                        help='Enable wandb logging')
+    parser.add_argument('--project', type=str, default='clser-original',
+                        help='wandb project name')
+    parser.add_argument('--exp_suffix', type=str, default=None,
+                        help='wandb experiment suffix')
+    parser.add_argument("--time_suffix", type=str, default=None,
+                        help="If set, the given time suffix will be used. Otherwise, it will use the running time stamp. ")
+
     parser.add_argument('--validation', action='store_true',
                         help='Test on the validation set')
     parser.add_argument('--output_dir', type=str, default='experiments')
